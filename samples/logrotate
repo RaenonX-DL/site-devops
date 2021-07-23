@@ -1,0 +1,6 @@
+/home/deploy/logs/log.log {
+    daily
+    rotate 7
+    maxage 14
+    su deploy deploy
+}
