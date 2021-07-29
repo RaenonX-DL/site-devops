@@ -54,9 +54,10 @@ Procedure to setup CI/CD.
   - Job group display name to be `Deploy`
   - `Deployment Group` to pick the one configured in step 1
   - `Artifact download` to ensure only the build one is downloaded, no coverage report
-9. Add 2 jobs:
+9. Add 3 jobs:
   - Extract files
   - Copy files
+  - Bash script
 10. Extract job to have the following settings:
   - `Display Name`: Extract Build Artifacts
   - `Archive Pattern`: $(System.ArtifactsDirectory)/<APP_NAME>-source/<ARTIFACT>/<TAR_FILE>
@@ -73,9 +74,16 @@ Procedure to setup CI/CD.
   - `Target Folder`: /home/deploy/<APP_NAME>
     - Same as extract destination.
   - **UNCHECK** clean target folder because checking this is the opposite step 10.
-12. Test deploy. `/home/deploy/<APP_NAME>` should have the app ready to be deployed.
-13. Edit the pipeline, go to "Options" tab.
-14. Change Release name format to `Release-$(rev:r) ($(Build.BuildNumber))`.
-15. Go to Integrations section.
+12. Bash script job to have the following settings:
+  - `Display Name`: Reload pm2
+  - `Type`: inline
+  - `Script`: `pm2 reload <APP_NAME>`
+  - `Environment Variables`:
+    - `HOME`: `/home/deploy`
+      - Related doc: https://stackoverflow.com/q/32178443/11571888
+13. Test deploy. `/home/deploy/<APP_NAME>` should have the app ready to be deployed.
+14. Edit the pipeline, go to "Options" tab.
+15. Change Release name format to `Release-$(rev:r) ($(Build.BuildNumber))`.
+16. Go to Integrations section.
   - Check "Report deployment status to the repository host"
   - Check "Enable the deployment status badge"
