@@ -28,23 +28,27 @@ The script will preserve the old network settings and apply them to the new netw
 
 [CmdletBinding()]
 Param (
-    [Parameter(Position = 0, Mandatory = $true, HelpMessage = 'Enter the Resource Group of the VM')]
-    [Alias('rg')]
-    [String]$resourceGroup,
+    [Parameter(Position = 0, Mandatory = $true, HelpMessage = 'Enter the desired subscription ID')]
+    [Alias('subId')]
+    [String]$SubscriptionId,
 
-    [Parameter(Position = 1, Mandatory = $True, HelpMessage = 'Enter Azure VM name')]
+    [Parameter(Position = 1, Mandatory = $true, HelpMessage = 'Enter the Resource Group of the VM')]
+    [Alias('rg')]
+    [String]$ResourceGroup,
+
+    [Parameter(Position = 2, Mandatory = $True, HelpMessage = 'Enter Azure VM name')]
     [Alias('VM')]
     [String]$VMName,
 
-    [Parameter(Position = 2, Mandatory = $true, HelpMessage = 'Enter the desired NIC interface name')]
-    [Alias('NewNIC')]
+    [Parameter(Position = 3, Mandatory = $true, HelpMessage = 'Enter the desired NIC interface name')]
+    [Alias('newNIC')]
     [String]$NewNicName
 )
 
 #! Check Azure Connection
 Try {
     Write-Verbose "Connecting to Azure Cloud..."
-    Connect-AzAccount -ErrorAction Stop | Out-Null
+    Connect-AzAccount -ErrorAction Stop -Subscription $SubscriptionId | Out-Null
 }
 Catch {
     Write-Warning "Cannot connect to Azure Cloud. Please check your credentials. Exiting!"
@@ -53,12 +57,12 @@ Catch {
 
 #! Get the details of the VM
 Write-Verbose "Get the VM information details: $VMName"
-$VM = Get-AzVM -Name $VMName -ResourceGroupName $resourceGroup
+$VM = Get-AzVM -Name $VMName -ResourceGroupName $ResourceGroup
 
 #! Get the virtual NIC interface name and details
 Write-Verbose "Get the old virtual NIC interface name and details..."
 $oldNicName = $VM.NetworkProfile.NetworkInterfaces.Id.Split('/')[-1]
-$vNic = Get-AzNetworkInterface -Name $oldNicName -ResourceGroupName $resourceGroup
+$vNic = Get-AzNetworkInterface -Name $oldNicName -ResourceGroupName $ResourceGroup
 
 #! Get the public ip address of the virtual machine if exists.
 If ($VNic.IpConfigurations.publicIPAddress.Id -ne $null) {
@@ -70,11 +74,11 @@ If ($VNic.IpConfigurations.publicIPAddress.Id -ne $null) {
 
 #! Stop the VMName
 Write-Verbose "Stop and deallocate the VM: $VMName, please wait..."
-Stop-AzVM -Name $VMName -ResourceGroupName $resourceGroup -Force -Confirm:$false | Out-Null
+Stop-AzVM -Name $VMName -ResourceGroupName $ResourceGroup -Force -Confirm:$false | Out-Null
 
 #! Create the new virtual NIC interface
 Write-Verbose "Creating the new virtual Network interface..."
-$NIC = New-AzNetworkInterface -Name $NewNicName -ResourceGroupName $resourceGroup `
+$NIC = New-AzNetworkInterface -Name $NewNicName -ResourceGroupName $ResourceGroup `
     -Location $VM.Location -SubnetId $vnic.IpConfigurations.Subnet.Id `
     -IpConfigurationName $vnic.IpConfigurations.Name
 
@@ -84,14 +88,14 @@ Remove-AzVMNetworkInterface -vm $VM -NetworkInterfaceIDs $vNic.Id | Out-Null
 
 #! Add the new NIC interface
 Write-Verbose "Adding the new network adapter interface to the VM..."
-Add-AzVMNetworkInterface -VM $VM -NetworkInterface $NIC | Update-AzVM -ResourceGroupName $resourceGroup | Out-Null
+Add-AzVMNetworkInterface -VM $VM -NetworkInterface $NIC | Update-AzVM -ResourceGroupName $ResourceGroup | Out-Null
 
 #! Delete the old NIC interface resource
 Write-Warning "Deleting the old NIC interface: $($oldNicName)"
 Remove-AzNetworkInterface -Name $oldNicName -ResourceGroupName $vNic.ResourceGroupName -Force -Confirm:$false
 
 #! Update the new virtual NIC settings
-$NIC = Get-AzNetworkInterface -Name $NewNicName -ResourceGroupName $resourceGroup
+$NIC = Get-AzNetworkInterface -Name $NewNicName -ResourceGroupName $ResourceGroup
 If ($vNic.Tag -ne $null) {
     $NIC.Tag = $vNIC.Tag
 }
@@ -110,7 +114,7 @@ Set-AzNetworkInterface -NetworkInterface $NIC | Out-Null
 
 #! Create a public IP for the VM.
 If ($PIpName) {
-    $PublicIp = Get-AzPublicIpAddress -Name $PIpName -ResourceGroupName $resourceGroup
+    $PublicIp = Get-AzPublicIpAddress -Name $PIpName -ResourceGroupName $ResourceGroup
     $NIC | Set-AzNetworkInterfaceIpConfig -Name $NIC.IpConfigurations.Name -PublicIPAddress $PublicIp `
         -Subnet $vnic.IpConfigurations.Subnet | Out-Null
     Write-Verbose "Associate the public IP address to the VM: $PIpName"
@@ -119,4 +123,4 @@ If ($PIpName) {
 
 #! Start the VMName
 Write-Verbose "Start the VM: $VMName, please wait..."
-Start-AzVM -Name $VMName -ResourceGroupName $resourceGroup -Confirm:$false | Out-Null
+Start-AzVM -Name $VMName -ResourceGroupName $ResourceGroup -Confirm:$false | Out-Null
