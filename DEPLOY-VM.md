@@ -98,7 +98,7 @@ as building on VM is likely to consume all resources, impacting the overall serv
 4. Store at `/etc/nginx/conf.d/status.conf`
 5. `sudo systemctl restart nginx`
 
-## Setup New Relic One
+## Setup New Relic
 
 1. Head to https://one.newrelic.com/.
 2. Click on "Add more data" at the top right.

@@ -11,6 +11,10 @@ This must be done after completed [establishing the CI pipeline](/AZURE-DEVOPS#C
 3. Configure as needed.
   - Deployment group should be something like `DL Site Front Deployment Group`
 
+This mainly does the VM - Azure Pipelines linking work,
+so that the CD created in the future can use 
+the deployment group linked in step 3.
+
 ## Configure DNS
 
 Use an unused submodain first to check if the app is public.
@@ -40,3 +44,12 @@ to connect to the VM using `subdomain.domain.com`.
 For example, if the IP of the VM is `10.0.0.1` and the domain is `domain.com`,
 setting `Name` as `subdomain` and `Content` as `10.0.0.1` allows the user on the internet 
 to connect to the VM using `subdomain.domain.com`.
+
+## Create util aliases
+
+Copy the file `samples/.bash_aliases` to the root directory of `deploy`.
+The file should located at `/home/deploy/.bash_aliases`.
+
+After this, run `source .bashrc` to load the changes.
+
+> This adds a command `fm` which simply output the current free RAM %.
