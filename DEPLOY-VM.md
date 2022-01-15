@@ -45,7 +45,7 @@ These steps are performed on Azure VMs.
 
 1. `sudo apt update`
 2. `sudo apt upgrade -y`
-3. `curl -sL https://deb.nodesource.com/setup_14.x | sudo bash -`
+3. `curl -sL https://deb.nodesource.com/setup_16.x | sudo bash -`
 4. `sudo apt install nodejs nginx net-tools -y`
 5. `sudo npm install -g npm pm2`
 6. `sudo reboot`
@@ -110,6 +110,7 @@ as building on VM is likely to consume all resources, impacting the overall serv
 ### During installation
 
 - NGINX status URL: `http://localhost:888/nginx_status`
+  - This might be optional as it could already configured in `/etc/newrelic-infra/integrations.d/nginx-config.yml` if detected.
 
 ### After installation
 
